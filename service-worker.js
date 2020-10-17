@@ -19,8 +19,39 @@ importScripts(
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+      self.skipWaiting();
   }
+  if (event.data && event.data.type === 'getUser') {
+      self.clients.matchAll().then(all => all.forEach(client => {
+          console.log(client);            
+      }));
+  }
+  if (event.data && event.data.type === 'sendMessage') {
+      self.clients.matchAll().then(all => all.forEach(client => {
+          if (client.visibilityState === 'visible') {
+              client.postMessage(event.data);
+          } else {
+              client.postMessage(event.data);
+              self.registration.showNotification(event.data.value.from, {
+                  body: event.data.value.message,
+              })
+          }
+      }));
+  }
+});
+self.addEventListener('notificationclick', function (event) {
+  event.notification.close();
+  event.waitUntil(
+      self.clients.matchAll({type: "window"}).then((clientList) => {
+          for (var i = 0; i < clientList.length; i++) {
+              var client = clientList[i];
+              return client.focus();
+          }
+          if (clients.openWindow) {
+              return clients.openWindow('https://tajwid-socket.herokuapp.com');                    
+          }
+      })
+  )
 });
 
 workbox.core.clientsClaim();
